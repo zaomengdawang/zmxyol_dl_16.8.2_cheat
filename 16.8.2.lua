@@ -1,5 +1,5 @@
 local SCRIPT_VERSION = "5.1"
-local TRACE_PATH = "/sdcard/qiyian_168_channel.log"
+local TRACE_PATH = "/sdcard/168_channel.log"
 
 local PROFILE = {
   packageName = "com.zmxyol.union.dn",

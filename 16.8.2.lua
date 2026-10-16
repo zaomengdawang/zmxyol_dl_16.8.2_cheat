@@ -1503,7 +1503,7 @@ local function actionError(label, problem)
   return false
 end
 
-local SETTINGS_PATH = "/sdcard/qiyian_168_settings.txt"
+local SETTINGS_PATH = "/sdcard/168_settings.txt"
 local settings = {cache=nil}
 
 function settings.load()

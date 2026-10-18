@@ -1,29 +1,39 @@
+
 local SCRIPT_VERSION = "5.1"
 local TRACE_PATH = "/sdcard/168_channel.log"
 
 local PROFILE = {
   packageName = "com.zmxyol.union.dn",
   versionCode = 1640,
-  versionName = "16.8.2s",
+  versionName = "16.8.0s",
   abi = "arm64-v8a",
+   
   gameModule = "_64_game.so",
+   
   gameBaseRangeIndex = 2,
+   
   selfValueOffset = 0xBCA5F8,
   selfValue64Offset = 8,
+   
   maxRelativeOffset = 0xCC2A98,
 }
 
+ 
+ 
 local MODULE_OFFSET = {
-  A0 = 0xBED7F8,
-  root80 = 0xBED0B0,
-  person = 0xBF12C8,
-  globalItems = 0xBEDFB8,
-  map = 0xBEBB60,
+  A0 = 0xBED7F8,            
+  root80 = 0xBED0B0,        
+  person = 0xBF12C8,        
+  globalItems = 0xBEDFB8,   
+  map = 0xBEBB60,           
+   
+   
   cooldown = 0xBEBF80,
-  dynamicSearch = 0xCC2A98,
-  petBook = 0xBEE530,
-  passive = 0xBEE3D0,
-  task = 0xBEE778,
+  dynamicSearch = 0xCC2A98,  
+  petBook = 0xBEE530,       
+   
+  passive = 0xBEE3D0,       
+  task = 0xBEE778,          
 }
 
 local TAG = {
@@ -37,6 +47,7 @@ local TAG = {
   ["奇闻录宠物基址头"] = MODULE_OFFSET.petBook,
 }
 
+ 
 TAG["全局物品"] = {TAG["全局基址头"], 8, 24, 0}
 TAG["动态搜值"] = {TAG["动态搜值头"], 256, 24, 0}
 TAG["人物基址"] = {TAG["人物基址头"], 128, 0}
@@ -46,49 +57,67 @@ TAG["灵物阶数"] = {TAG["人物基址头"], 128, 4896, 128, 108}
 TAG["任务基址"] = {MODULE_OFFSET.task, 80, 24, 16, 0, 696}
 TAG["全局任务数量"] = {MODULE_OFFSET.task, 56, 24, 0}
 TAG["被动基址"] = {MODULE_OFFSET.passive, 368, 16, 0}
+ 
 TAG["昆仑山层数"] = {TAG["改图基址头"], 1216}
+ 
+ 
 TAG["掉落基址"] = {TAG["改图基址头"], 0xA58}
+ 
 if MODULE_OFFSET.cooldown then
   TAG["幻境基址"] = {TAG["冷却基址头"], 320, 0}
 end
+ 
 TAG["动态背包"] = {TAG["A0基址"], 1480}
+ 
+ 
+ 
 TAG["属性地址"] = {640, 0}
+ 
 TAG["宠物数量上层"] = {TAG["80基址"], 0x298}
 TAG["宠物数量"] = {TAG["80基址"], 0x298, 0}
 TAG["奇闻录宠物"] = {TAG["奇闻录宠物基址头"], 32, 512, 464, 16, 24, 16, 0}
 
+ 
 local FIELD = {
+   
   ["人物当前经验"] = 4520,
-  ["人物等级"] = 1040,
+  ["人物等级"] = 1040,      
   ["人物秒杀"] = 1612,
   ["人物加速"] = 896,
   ["护盾基址"] = 1688,
   ["人物隐身"] = 1344,
   ["人物移速"] = 416,
-  ["普攻基址"] = 5728,
+  ["普攻基址"] = 5728,      
   ["战功"] = 1056,
+   
   ["灵魂"] = 56,
   ["仙气"] = 92,
-  ["启灵珠"] = 1616,
+   
+  ["启灵珠"] = 1616,       
   ["装备品质"] = 332,
-  ["装备壳子"] = 592,
+  ["装备壳子"] = 592,       
   ["装备壳子2"] = 512,
-  ["宠物指针"] = 24,
-  ["宠物状态"] = 4416,
-  ["宠物等级"] = 3376,
-  ["宠物涅槃"] = 680,
+   
+  ["宠物指针"] = 24,        
+   
+   
+  ["宠物状态"] = 4416,      
+  ["宠物等级"] = 3376,      
+  ["宠物涅槃"] = 680,       
   ["宠物生命"] = 200,
   ["宠物根骨"] = 296,
   ["宠物阶数"] = 368,
   ["宠物技能"] = 656,
-  ["宠物名称"] = 32,
-  ["被动等级"] = 56,
-  ["本命灵物"] = 112,
-  ["本命等级"] = 124,
+  ["宠物名称"] = 32,        
+   
+  ["被动等级"] = 56,        
+  ["本命灵物"] = 112,       
+  ["本命等级"] = 124,       
   ["本命等级副本"] = 136,
-  ["任务状态"] = 376,
+  ["任务状态"] = 376,       
 }
 
+ 
 local PANEL_FIELDS = {
   {name="魔抗", offset=2116},
   {name="破魔", offset=2128},
@@ -120,6 +149,7 @@ local runtime = {
   activeMenu = nil,
   menuDispatching = false,
   queuedMenu = nil,
+   
   allowLowTestAddresses = false,
 }
 
@@ -148,6 +178,10 @@ local function valueSize(flags)
   return 4
 end
 
+ 
+ 
+ 
+ 
 local function indexRanges(ranges)
   local sorted, ordered = {}, true
   if type(ranges) ~= "table" then return sorted, false end
@@ -183,6 +217,7 @@ local function refreshRanges(force)
   return runtime.ranges
 end
 
+ 
 local function findRange(ranges, sorted, overlapping, address, lastAddress)
   if overlapping then
     for _, range in ipairs(ranges) do
@@ -212,6 +247,12 @@ end
 local DIRECT_PROBE_PAGE_SIZE = 4096
 local DIRECT_PROBE_MAX_PAGES = 4096
 
+ 
+ 
+ 
+ 
+ 
+ 
 local function probeReadablePages(address, lastAddress)
   local pageSize = DIRECT_PROBE_PAGE_SIZE
   local pageStart = address - (address % pageSize)
@@ -263,6 +304,8 @@ local function mappedRange(address, size, forceRefresh)
   end
   local lastAddress = address + size - 1
   if lastAddress < address then return nil end
+   
+   
   if forceRefresh == true then refreshRanges(true) end
   local lastRange = runtime.lastMappedRange
   if lastRange and address >= lastRange.start and
@@ -428,6 +471,11 @@ end
 
 local Codec = {}
 
+ 
+ 
+ 
+
+ 
 function Codec.decodeMany(requests)
   local reads = {}
   for index, item in ipairs(requests) do
@@ -449,6 +497,7 @@ function Codec.decode(address)
   return Codec.decodeMany({{address=address}})[1]
 end
 
+ 
 function Codec.decode5Many(requests)
   local reads = {}
   for index, item in ipairs(requests) do
@@ -472,6 +521,9 @@ function Codec.decode5(address)
   return Codec.decode5Many({{address=address}})[1]
 end
 
+ 
+ 
+ 
 function Codec.decode64Many(requests)
   if #requests == 0 then return {} end
   local selfValue = runtime.codecSelfValue64
@@ -498,6 +550,10 @@ function Codec.decode64(address)
   return Codec.decode64Many({{address=address}})[1]
 end
 
+ 
+ 
+ 
+ 
 function Codec.encodeKey(raw0, raw4, raw8, target, rekey)
   local selfValue = TAG["自拟值"]
   local current = rotateLeft32(raw4 ~ selfValue, raw8)
@@ -512,8 +568,11 @@ end
 
 local requireInteger
 
+ 
+ 
 local Transaction = {}
 
+ 
 local TRANSACTION_OFFSETS = {
   key={0, 4, 8},
   key5={0, 8, 12, 16},
@@ -593,6 +652,7 @@ local function normalizeTransactionSpecs(specs)
       ),
       flags=flags,
       value=target,
+       
       rekey=input.rekey == true,
       label=input.label or ("第 " .. index .. " 个事务字段"),
     }
@@ -800,6 +860,9 @@ local function rollbackTransaction(specs, original, expected, validator, label)
   return true
 end
 
+ 
+ 
+ 
 local function runWithTargetPaused(label, callback)
   if type(gg.processPause) ~= "function" or
      type(gg.processResume) ~= "function" then
@@ -835,6 +898,8 @@ function Transaction.write(inputSpecs, options)
   local singleSnapshot = options.singleSnapshot == true
 
   local function validateApplied(actual, expected, original)
+     
+     
     validateCodecPrimaryConsistency(actual, original, specs, label)
     if appliedValidator then
       local accepted = appliedValidator(actual, expected, original, specs)
@@ -857,6 +922,9 @@ function Transaction.write(inputSpecs, options)
   local function executeWrite()
     local original
     if singleSnapshot then
+       
+       
+       
       original = readTransactionSnapshot(specs)
       validateOriginal(original)
       validateTransactionIdentity(validator, label)
@@ -949,6 +1017,8 @@ function Codec.transaction(specs, options)
   return Transaction.write(specs, options)
 end
 
+ 
+ 
 function Codec.verifyWrites(items, label)
   if #items == 0 then return true end
   local decoded = Codec.decodeMany(items)
@@ -969,6 +1039,10 @@ function Codec.writeVerified(items, label, validateIdentity)
   return Codec.verifyWrites(items, label)
 end
 
+ 
+ 
+ 
+ 
 local RestoreJournal = {entries={}, order={}}
 
 local function restoreSame(kind, left, right)
@@ -994,6 +1068,8 @@ local function restoreRead(kind, entries)
   return result
 end
 
+ 
+ 
 function RestoreJournal.capture(label, kind, items, validate)
   local fresh = {}
   for _, item in ipairs(items) do
@@ -1083,8 +1159,15 @@ function RestoreJournal.restore()
   return result
 end
 
+ 
+ 
+ 
 local STRING_REQUEST_BUDGET = 8192
 
+ 
+ 
+ 
+ 
 local function appendStringRequests(requests, address, length, rangeEnd)
   local words = math.max(0, math.min(length, rangeEnd - address)) // 8
   for index = 0, words - 1 do
@@ -1098,6 +1181,8 @@ local function appendStringRequests(requests, address, length, rangeEnd)
   return words
 end
 
+ 
+ 
 local function decodeStringValues(values, first, length, words)
   local chars = {}
   local index = first
@@ -1142,10 +1227,14 @@ function Memory.readString(pointerField, maximumBytes)
   return decodeStringValues(Memory.readMany(requests), 1, length, words)
 end
 
+ 
+ 
 function Memory.readStringsAt(pointers, maximumBytes)
   if type(pointers) ~= "table" then error("字符串指针列表无效", 0) end
   maximumBytes = requireStringLength(maximumBytes)
 
+   
+   
   local ranges = refreshRanges(false)
   local sorted, overlapping = runtime.sortedRanges, runtime.rangesOverlap
   local lastRange
@@ -1157,11 +1246,14 @@ function Memory.readStringsAt(pointers, maximumBytes)
       return lastRange, address
     end
     local range = findRange(ranges, sorted, overlapping, address, address)
+     
+     
     if not range then range = mappedRange(address, 1) end
     if range then lastRange = range end
     return range, address
   end
 
+   
   local perItem = maximumBytes // 8 + maximumBytes % 8
   local batchItems = math.max(1, STRING_REQUEST_BUDGET // perItem)
   local names = {}
@@ -1206,6 +1298,9 @@ function Memory.readStringsAt(pointers, maximumBytes)
   return names
 end
 
+ 
+ 
+ 
 function Memory.readStdStrings(addresses, maximumBytes)
   maximumBytes = maximumBytes or 64
   local requests = {}
@@ -1318,6 +1413,7 @@ local function showMenu(owner, title, labels, actions, multiSelect)
               error("菜单功能不存在", 0)
             end
             action()
+             
             if runtime.queuedMenu then break end
           end
         end
@@ -1452,6 +1548,7 @@ local function initializeRuntime()
   trace("startup protection removed after channel A/B stack-corruption test")
 end
 
+ 
 local function copyArray(values)
   local result = {}
   for index = 1, #values do result[index] = values[index] end
@@ -1493,6 +1590,7 @@ local function requireField(name)
   return offset
 end
 
+ 
 local function resolveTag(name, size)
   return Memory.resolve(gameBase(), requirePath(name), size or 1)
 end
@@ -1503,6 +1601,7 @@ local function actionError(label, problem)
   return false
 end
 
+ 
 local SETTINGS_PATH = "/sdcard/168_settings.txt"
 local settings = {cache=nil}
 
@@ -1571,10 +1670,13 @@ local app = {
   POINTER_MASK=POINTER_MASK,
   MIN_VALID_POINTER=MIN_VALID_ADDRESS,
   FAIRY_SLOT_SIZE=24,
+   
   FAIRY_MAX_SLOTS=16,
   PET_PHYSICAL_MAXIMUM=64,
 }
 
+ 
+ 
 local function targetProcessAvailable()
   local packageOk, packageName = pcall(gg.getTargetPackage)
   if not packageOk or packageName ~= PROFILE.packageName then
@@ -1631,6 +1733,7 @@ local menus = {
       {"🚀 自定加速", action="jiasu"},
       {"🔘 一键物理(监听)", action="yjwl"},
       {"🗿 一键荒古物理", action="hgwl"},
+      {"🧿 破除灵咒+混沌(进关前开)", action="pclz"},
       {"🏷️ 称号秒杀", action="chenghao"},
       {"🛡️ 护盾无敌", action="hudun"},
       {"⚡ 倍率秒杀", action="beilv"},
@@ -1738,6 +1841,8 @@ local menus = {
   },
 }
 
+ 
+ 
 local PENDING = {
   huanle="任务基址路径未核对",
 }
@@ -1760,6 +1865,8 @@ local function registerActions(moduleActions)
   end
 end
 
+ 
+ 
 local function installModule(key, factory)
   local module = factory(app)
   app[key] = module
@@ -1773,6 +1880,7 @@ installModule("Listener", function(app)
   local traceback = app.traceback
   local Listener = {}
 
+   
   local HARD_MIN_POLL_MS = 50
   local FAST_MIN_POLL_MS = 1
   local DEFAULT_POLL_MS = 100
@@ -1793,6 +1901,7 @@ installModule("Listener", function(app)
     }
   end
 
+   
   function Listener.stop(reason, value)
     return signal("stop", reason or "stopped", value)
   end
@@ -1875,6 +1984,9 @@ installModule("Listener", function(app)
     local ok, problem = pcall(api.sleep, milliseconds)
     if ok then return true end
     local message = tostring(problem)
+     
+     
+     
     if message:find("InterruptedException", 1, true) or
        message:lower():find("interrupted", 1, true) then
       traceLine("sleep interrupted; resume polling: " .. message)
@@ -1894,6 +2006,7 @@ installModule("Listener", function(app)
         local value = okCustom and finiteNumber(customValue) or nil
         if value then return math.floor(value) end
       end
+       
       return os.time() * 1000
     end
   end
@@ -1936,6 +2049,11 @@ installModule("Listener", function(app)
     return runEarlyCleanup(spec, outcome)
   end
 
+   
+   
+   
+   
+   
   function Listener.run(spec)
     if type(spec) ~= "table" then
       return invalidRun("监听配置必须是 table", spec)
@@ -2025,6 +2143,7 @@ installModule("Listener", function(app)
     local function elapsedMs()
       local wallElapsed = now() - startedAt
       if wallElapsed < 0 then wallElapsed = 0 end
+       
       return math.max(math.floor(wallElapsed), sleptMs)
     end
 
@@ -2109,6 +2228,8 @@ installModule("Listener", function(app)
 
     local function checkExit()
       updatePhase("poll")
+       
+       
       if type(app.cleanupOwnedFreezes) == "function" then
         app.cleanupOwnedFreezes(false)
       end
@@ -2198,6 +2319,7 @@ installModule("Listener", function(app)
       fail("error", runProblem, context.phase or "run")
     end
 
+     
     updatePhase("cleanup")
     if type(spec.cleanup) == "function" then
       local okCleanup, cleanupProblem = callback(
@@ -2238,6 +2360,8 @@ installModule("Listener", function(app)
     return outcome
   end
 
+   
+   
   function Listener.pollMenuVisibility(spec)
     if type(spec) == "function" then spec = {onVisible = spec} end
     if type(spec) ~= "table" or type(spec.onVisible) ~= "function" then
@@ -2272,6 +2396,8 @@ installModule("Listener", function(app)
         end
         local visible = isGgVisible()
         if not stats.visibleArmed then
+           
+           
           if visible and spec.hideOnVisible ~= false then hideGg() end
           stats.visibleArmed = true
           return nil
@@ -2326,6 +2452,11 @@ installModule("Listener", function(app)
   return Listener
 end)
 
+ 
+ 
+ 
+ 
+
 installModule("items", function(app)
   local Memory = app.Memory
   local Codec = app.Codec
@@ -2348,6 +2479,8 @@ installModule("items", function(app)
     recordedIds = 100000,
   }
 
+   
+   
   local OFFSET = {
     nodeItemPath = {0x108, 0x18, 0},
     nextNode = 0x120,
@@ -2358,7 +2491,12 @@ installModule("items", function(app)
     catalogId = 0x08,
     catalogName = 0x30,
     catalogEnabled = 0x38,
-    replacementCost = 0x88,
+     
+     
+    replacementCost = 0x88,    
+     
+     
+     
     replacementLinks = 0x1C8,
     replacementLinkValue = 0x0C,
     replacementId = 0x258,
@@ -2378,18 +2516,19 @@ installModule("items", function(app)
   local PRESET_IDS = {
     fbcl = {3301, 4501, 500200, 1302, 2502, 500203},
     szcl = {
-      503194, 503195, 503196,
-      503512, 503513, 503514,
+      503194, 503195, 503196,    
+      503512, 503513, 503514,    
     },
     bmcl = {
       503148, 503149, 503154, 503382,
       509200, 509201, 509202, 509203,
     },
     cailiaoluru = {
+       
       503012, 502135, 502284, 503119, 503120,
       503388, 503389, 503115, 904060, 904070,
       904080, 904090, 904100, 904110,
-      9315, 9512, 500221,
+      9315, 9512, 500221,   
     },
   }
 
@@ -2497,6 +2636,7 @@ installModule("items", function(app)
         if #nodes >= LIMIT.nodes then error("全局物品节点数量异常", 0) end
         seen[current] = true
 
+         
         requireRange(current + 0x108, 8, "全局物品节点对象槽")
         requireRange(current + OFFSET.nextNode, 8, "全局物品下一节点槽")
         local countAddress = Memory.resolve(
@@ -2509,6 +2649,8 @@ installModule("items", function(app)
           nodeAddress=current,
         }
 
+         
+         
         local nextRaw = Memory.read(current + OFFSET.nextNode, TYPE_QWORD)
         if (nextRaw & 0xFFFFFFFF) == 0 then return nodes end
         current = requireObject(normalizePointer(nextRaw, "全局物品下一节点"), 1,
@@ -2517,6 +2659,7 @@ installModule("items", function(app)
     end)
   end
 
+   
   local function cases(root, output)
     if type(output) ~= "table" then
       return false, "全局物品输出表无效"
@@ -2600,6 +2743,9 @@ installModule("items", function(app)
     end)
   end
 
+   
+   
+   
   local function readCandidateGroupNames(groups, nameOffset)
     return operation("候选物品组名称读取", function()
       requireDenseArray(groups, "候选物品组数组")
@@ -2610,6 +2756,10 @@ installModule("items", function(app)
         "物品组名称偏移"
       )
 
+       
+       
+       
+       
       local groupSlots = {}
       for index = 1, #groups do
         if type(groups[index]) ~= "table" or
@@ -2626,6 +2776,7 @@ installModule("items", function(app)
         }
       end
 
+       
       local function nextLevel(values, offset, pointerLabel, rangeLabel)
         local requests = {}
         for index, value in ipairs(values) do
@@ -2657,6 +2808,8 @@ installModule("items", function(app)
         rawPointers[index] = raw
       end
 
+       
+       
       local decodedNames = Memory.readStringsAt(rawPointers, 32)
       local names, skipped = {}, 0
       for index = 1, #groups do
@@ -2706,6 +2859,7 @@ installModule("items", function(app)
         if expectedCount ~= nil then
           matchesCount = group.count == expectedCount
         else
+           
           matchesCount = group.count > 44 and group.count < 7000
         end
         if matchesCount then candidates[#candidates + 1] = group end
@@ -2942,16 +3096,20 @@ installModule("items", function(app)
       local candidates = {}
       for index = 1, #groups do
         local count = groups[index].count
+         
         if count >= 10 and count <= LIMIT.groupItems then
           candidates[#candidates + 1] = groups[index]
         end
       end
 
+       
+       
       local candidateNames, nameReason = readCandidateGroupNames(
         candidates, OFFSET.defaultGroupName
       )
       if not candidateNames then error(nameReason, 0) end
 
+       
       local selectedGroups = {}
       for wantedIndex = 1, #CATALOG_GROUP_NAMES do
         local wantedName = CATALOG_GROUP_NAMES[wantedIndex]
@@ -3005,6 +3163,8 @@ installModule("items", function(app)
           flags=TYPE_QWORD,
         }
       end
+       
+       
       local names = Memory.readStrings(nameRequests, 32)
       for index = 1, #eligibleItems do
         if names[index] == "" then
@@ -3032,6 +3192,7 @@ installModule("items", function(app)
     local fresh, reason = buildCatalog()
     if not fresh then return nil, reason end
 
+     
     state.catalogNames = fresh.names
     state.catalogIds = fresh.ids
     state.catalogEntries = fresh.entries
@@ -3119,7 +3280,7 @@ installModule("items", function(app)
     else
       selected = gg.multiChoice(snapshot.names, nil, "选择")
     end
-    if not selected then return false end
+    if not selected then return false end  
 
     local ids = {}
     for index = 1, #snapshot.ids do
@@ -3134,7 +3295,7 @@ installModule("items", function(app)
 
   function actions.zdlr()
     local answer = gg.prompt({"录入id"}, {""}, {"number"})
-    if not answer then return false end
+    if not answer then return false end  
     local id = requireInteger(answer[1], 1, 0x7FFFFFFF, "物品 ID")
     local count, reason = catalog.recordOne(id)
     if not count then error(reason, 0) end
@@ -3315,6 +3476,7 @@ installModule("items", function(app)
         label="替换媒介关联对象",
       }
     end
+     
     specs[#specs + 1] = {
       kind="key",
       address=requireRange(address + OFFSET.replacementCost, 12, "替换媒介消耗"),
@@ -3338,6 +3500,8 @@ installModule("items", function(app)
         end
         return true
       end,
+       
+       
       validateApplied=function(_, _, _, appliedSpecs)
         return verifyDecodedKeySpecs(appliedSpecs, "替换媒介准备")
       end,
@@ -3346,6 +3510,8 @@ installModule("items", function(app)
   end
 
   local function writeReplacementId(identity, targetId, label, validateSoul)
+     
+     
     targetId = requireInteger(targetId, 0, 0x7FFFFFFF, "替换物品 ID")
     local specs = {{
       kind="key",
@@ -3370,6 +3536,9 @@ installModule("items", function(app)
 
   local function writeReplacementStep(identity, targetId, label, validateSoul)
     writeReplacementId(identity, targetId, label, validateSoul)
+     
+     
+     
     return Memory.read(identity.soulAddress, TYPE_DWORD)
   end
 
@@ -3394,12 +3563,13 @@ installModule("items", function(app)
       )
     end
     local sequence = copyArray(recorded)
-    sequence[#sequence + 1] = 0
+    sequence[#sequence + 1] = 0  
     trace(string.format(
       "item replacement requested: recorded=%d sequence=%d",
       #recorded, #sequence
     ))
 
+     
     local identity = findReplacementItem()
     local itemAddress = identity.address
     local idAddress = itemAddress + OFFSET.replacementId
@@ -3421,6 +3591,8 @@ installModule("items", function(app)
       hideOnCancel=true,
       acquire=function()
         resolveReplacementIdentity(identity, originalId)
+         
+         
         identity.expectedId = sequence[1]
         identity.started = true
         identity.lastSoulRaw = writeReplacementStep(
@@ -3439,6 +3611,7 @@ installModule("items", function(app)
 
         local nextIndex = listenerState.currentIndex + 1
         if nextIndex > #sequence then return true end
+         
         listenerState.lastSoulRaw = writeReplacementStep(
           listenerState, sequence[nextIndex], "替换媒介推进", true
         )
@@ -3452,6 +3625,7 @@ installModule("items", function(app)
         return nil
       end,
       recover=function(_, listenerState)
+         
         resolveReplacementIdentity(listenerState, listenerState.expectedId)
         listenerState.lastSoulRaw = Memory.read(
           listenerState.soulAddress, TYPE_DWORD
@@ -3460,11 +3634,14 @@ installModule("items", function(app)
       end,
       cleanup=function(listenerState)
         if not listenerState or not listenerState.started then return end
+         
         local lastKnownAddress = listenerState.address
         local identityOk = pcall(
           resolveReplacementIdentity, listenerState, listenerState.expectedId
         )
         if not identityOk then
+           
+           
           resolveReplacementSlot(listenerState, false)
           if listenerState.address ~= lastKnownAddress then
             error("替换媒介身份已变化，拒绝向新对象恢复旧 ID", 0)
@@ -3517,6 +3694,12 @@ installModule("items", function(app)
   return api
 end)
 
+ 
+ 
+ 
+ 
+ 
+
 installModule("pet", function(app)
   local Memory = app.Memory
   local Codec = app.Codec
@@ -3532,6 +3715,10 @@ installModule("pet", function(app)
   local requirePath = app.requirePath
   local requireField = app.requireField
 
+   
+   
+   
+   
   local LOGICAL_CAPACITY_OFFSET = 0x50
   local PET_ARRAY_OWNER_OFFSET = 0x298
   local PHYSICAL_MAXIMUM = app.PET_PHYSICAL_MAXIMUM
@@ -3564,6 +3751,7 @@ installModule("pet", function(app)
     return logicalCapacity, managerAddress
   end
 
+   
   local function readCountAndCapacity(countAddress)
     local values = Memory.readMany({
       {address=countAddress, flags=gg.TYPE_DWORD},
@@ -3585,6 +3773,8 @@ installModule("pet", function(app)
       base, requirePath("宠物数量"), 24
     )
 
+     
+     
     if Memory.pointer(upperAddress) ~= countAddress then
       error("宠物数量结构在读取期间发生变化", 0)
     end
@@ -3779,8 +3969,15 @@ installModule("pet", function(app)
     return current
   end
 
-  local CCARRAY_DATA = 0x18
-  local CCARRAY_REFERENCE = 0x10
+
+   
+   
+   
+   
+   
+   
+  local CCARRAY_DATA = 0x18           
+  local CCARRAY_REFERENCE = 0x10      
   local DONOR_SEARCH_LIMIT = 50000
 
   local function readArrayHeaders(dataAddresses)
@@ -3869,6 +4066,8 @@ installModule("pet", function(app)
         eligibleAddresses[#eligibleAddresses + 1] = header.address
       end
     end
+     
+     
     for _ = 1, 2 do
       if #eligible == 0 then break end
       gg.sleep(300)
@@ -3908,6 +4107,8 @@ installModule("pet", function(app)
       if ok then return true end
       lastProblem = tostring(problem)
       trace("pet capacity swap retry " .. attempt .. ": " .. lastProblem)
+       
+       
       if not lastProblem:find("交换数组已经变化", 1, true) then break end
     end
     return nil, lastProblem or "宠物数组安全扩容失败"
@@ -4007,6 +4208,8 @@ installModule("pet", function(app)
     return true
   end
 
+   
+   
   local function ensureAppendCapacity(
     snapshot, selectedPets, targetCount, requiredState
   )
@@ -4020,6 +4223,8 @@ installModule("pet", function(app)
     if not current then return nil, problem end
     snapshot = current
 
+     
+     
     if snapshot.capacity < targetCount then
       local borrowed, borrowProblem = borrowArrayCapacity(snapshot, targetCount)
       if not borrowed then return nil, borrowProblem end
@@ -4057,6 +4262,8 @@ installModule("pet", function(app)
     return fresh, remapped
   end
 
+   
+   
   local function validateStructureIdentity(snapshot, selectedPets, requiredState)
     local logicalCapacity, managerAddress = readLogicalCapacity()
     if logicalCapacity ~= snapshot.logicalCapacity or
@@ -4177,6 +4384,10 @@ installModule("pet", function(app)
 
   local actions = {}
 
+   
+   
+   
+   
   local function promptIntField(config)
     local snapshot, pets = currentStatePets(false)
     if not snapshot then return false end
@@ -4220,6 +4431,7 @@ installModule("pet", function(app)
     for _, pet in ipairs(pets) do
       local ownerField = pet.stateAddress + ownerOffset
       local owner = Memory.pointer(ownerField)
+       
       if owner == 0 or not Memory.isMapped(owner, #preset * 12) then
         error("宠物涅槃数据尚未加载", 0)
       end
@@ -4232,6 +4444,9 @@ installModule("pet", function(app)
         }
       end
     end
+     
+     
+     
     writeAndVerifyCodec(writes, "宠物涅槃", function()
       validateStructureIdentity(snapshot, pets, selectedState())
       for _, owner in ipairs(owners) do
@@ -4276,6 +4491,8 @@ installModule("pet", function(app)
         }
       end
     end
+     
+     
     writeAndVerifyCodec(writes, config.title)
     trace(string.format("pet %s state=%d count=%d",
       config.traceName, selectedState(), #pets))
@@ -4330,6 +4547,8 @@ installModule("pet", function(app)
   end
 
   function actions.vanish()
+     
+     
     local snapshot = readStableSnapshot(true)
     if snapshot.count == 0 then
       gg.toast("当前没有宠物")
@@ -4346,6 +4565,11 @@ installModule("pet", function(app)
     )
     if not current then error(validationProblem, 0) end
     snapshot = current
+     
+     
+     
+     
+     
     local upper, count = snapshot.upperAddress, snapshot.countAddress
     local fields = {
       {upper + 8, gg.TYPE_DWORD},
@@ -4375,6 +4599,7 @@ installModule("pet", function(app)
          arrayAddress ~= snapshot.arrayAddress then
         error("宠物消失期间列表结构发生变化", 0)
       end
+       
       local requests = {
         {address=countAddress, flags=gg.TYPE_DWORD},
         {address=countAddress + 4, flags=gg.TYPE_DWORD},
@@ -4447,6 +4672,9 @@ installModule("pet", function(app)
     return true
   end
 
+   
+   
+
   return {
     actions=actions,
     readStableSnapshot=readStableSnapshot,
@@ -4457,6 +4685,11 @@ installModule("pet", function(app)
     physicalMaximum=PHYSICAL_MAXIMUM,
   }
 end)
+
+ 
+ 
+ 
+ 
 
 installModule("player", function(app)
   local Memory = app.Memory
@@ -5326,6 +5559,7 @@ installModule("player", function(app)
 
     local targets = {}
     for index, value in ipairs(snapshot.values) do
+       
       if value >= 0 and value <= 999999 then
         targets[#targets + 1] = snapshot.requests[index].address
       end
@@ -5379,6 +5613,9 @@ installModule("player", function(app)
     return true
   end
 
+   
+   
+   
   function actions.wlhf()
     local freezeOk, freezeProblem = pcall(cleanupOwnedFreezes, true)
     if app.restoreJournal.count() == 0 then
@@ -5493,9 +5730,13 @@ installModule("player", function(app)
     return true
   end
 
+   
   app.cleanupOwnedFreezes = cleanupOwnedFreezes
   return {actions=actions}
 end)
+
+ 
+ 
 
 installModule("map", function(app)
   local Memory = app.Memory
@@ -5515,27 +5756,33 @@ installModule("map", function(app)
   local state = {noMonster=nil, nineHeavens=nil}
   local actions = {}
 
+   
   local OFFSET = {
+     
     guideDictionary = 0x08,
     guideFirstNode = 0x18,
-    guideNodeKey = 0x100,
-    guideNodeArray = 0x108,
+    guideNodeKey = 0x100,         
+    guideNodeArray = 0x108,       
     guideNodeNext = 0x120,
     guideNodeRowCount = 0x140,
-    guideArray = 0x18,
-    guideArraySlots = 0x10,
+    guideArray = 0x18,            
+    guideArraySlots = 0x10,       
+     
+     
     guideCacheMaps = {0xA8, 0x90},
     guideCacheKey = 0x20,
     guideCacheLeft = 0x00,
     guideCacheRight = 0x08,
-    guideRecord = 0x18,
-    guideRecordSteps = 0x20,
+    guideRecord = 0x18,           
+    guideRecordSteps = 0x20,      
     guideRecordStepCount = 0x28,
-    guideRecordId = 0x08,
+    guideRecordId = 0x08,         
     guideRecordPredecessor = 0x2C,
+     
     mapName = 0x30,
     mapMonsters = 0xE8,
     mapObjectSize = 0xF0,
+     
     monsterParam = 0x20,
     monsterSwitch = 0x50,
   }
@@ -5549,10 +5796,15 @@ installModule("map", function(app)
     return address
   end
 
+
   local function sameValue(actual, expected, flags)
     return actual == expected
   end
 
+   
+   
+   
+   
   local GUIDE_PREDECESSORS = {
     [900000]=900021, [900002]=900001, [900003]=900000, [900004]=900000,
     [900006]=900005, [900007]=900006, [900008]=900007, [900009]=900008,
@@ -5570,9 +5822,13 @@ installModule("map", function(app)
   for id = 901000, 901002 do GUIDE_IDS[#GUIDE_IDS + 1] = id end
   for id = 8269000, 8269019 do GUIDE_IDS[#GUIDE_IDS + 1] = id end
 
+   
+   
   local GUIDE_DATA_SEGMENT_DELTA = 0x712E000
   local GUIDE_VTABLE_OFFSET = 0x73227B8
   local GUIDE_ELF_SPAN = 0x8000000
+   
+   
   local GUIDE_CODE = {
     {0x36EDA68, 0x52888BE8}, {0x36EDA70, 0x72BFFE48},
     {0x36EDA8C, 0x5283FE69}, {0x36EDA98, 0xA952E675},
@@ -5612,6 +5868,8 @@ installModule("map", function(app)
       result.guards[#result.guards + 1] = {address=address, flags=flags, value=value}
       return tonumber(value)
     end
+     
+     
     local function guardMany(requests)
       local values = Memory.readMany(requests)
       local numbers = {}
@@ -5665,6 +5923,8 @@ installModule("map", function(app)
       error("关闭指引：指引配置数量或容量不符", 0)
     end
     local slots = pointer(array + OFFSET.guideArraySlots)
+     
+     
     for _, mapOffset in ipairs(OFFSET.guideCacheMaps) do
       local cache = untagPointer(guard(manager + mapOffset, TYPE_QWORD))
       seen = {}
@@ -5685,6 +5945,7 @@ installModule("map", function(app)
     result.secret = guard(
       requireBase() + PROFILE.selfValueOffset, TYPE_DWORD
     ) & 0xFFFFFFFF
+     
     local anchors = {person + FIELD["人物等级"], person + FIELD["人物移速"]}
     local anchorRequests = {}
     for _, address in ipairs(anchors) do
@@ -5707,6 +5968,8 @@ installModule("map", function(app)
     if keys[1] ~= keys[2] then error("关闭指引：角色 codec 锚点不一致", 0) end
     result.primary = keys[1]
 
+     
+     
     local slotRequests = {}
     for index = 1, #GUIDE_IDS do
       slotRequests[index] = {address=slots + (index - 1) * 8, flags=TYPE_QWORD}
@@ -5724,6 +5987,7 @@ installModule("map", function(app)
       local address = requireMappedPointer(raw, 8, "指引配置对象")
       if seen[address] then error("关闭指引：配置对象重复", 0) end
       seen[address] = true
+       
       if address >= elf and address < elf + GUIDE_ELF_SPAN then
         error("关闭指引：配置记录不是已验证的堆对象", 0)
       end
@@ -5787,6 +6051,7 @@ installModule("map", function(app)
       if predecessor ~= original and not (systemGuide and predecessor == row.id) then
         error("关闭指引：前置条件不是原版或本脚本已知值", 0)
       end
+       
       local excluded = row.id == 900001 or row.id == 900002 or
                        (row.id >= 900005 and row.id <= 900013)
       if collect and systemGuide and not excluded and predecessor ~= row.id then
@@ -5842,6 +6107,8 @@ installModule("map", function(app)
     return #config.specs
   end
 
+   
+   
   function actions.guanbizhiyin()
     local writes = disableGuides()
     local enabled = app.settings.get("auto_guide_off") == "1"
@@ -5882,6 +6149,9 @@ installModule("map", function(app)
     return Items
   end
 
+   
+   
+   
   local function readMapRecordValues(snapshot, trailingRequests, monsterMustMatch)
     local requests = {
       {address=snapshot.group.countAddress, flags=TYPE_DWORD},
@@ -6006,6 +6276,8 @@ installModule("map", function(app)
         flags=TYPE_QWORD,
       }
     end
+     
+     
     local names = Memory.readStrings(nameRequests, 32)
     local missingIndexes, retryRequests = {}, {}
     for index = 1, #records do
@@ -6016,6 +6288,9 @@ installModule("map", function(app)
       end
     end
 
+     
+     
+     
     local recoveredNames = 0
     if #retryRequests > 0 then
       pcall(gg.sleep, 150)
@@ -6091,6 +6366,9 @@ installModule("map", function(app)
         if record.name == "决战黄泉路" or record.name == "幽冥冰窟" then
           error(record.name .. "关键怪物对象为空", 0)
         end
+         
+         
+         
         skippedEmpty[#skippedEmpty + 1] = record.name
       else
         monsterObject = requireMappedPointer(
@@ -6152,6 +6430,7 @@ installModule("map", function(app)
     identity.sourceSwitch = sourceSwitch
     add(sourceSwitch, TYPE_DWORD, 0, "黄泉路怪物开关")
 
+     
     if not Memory.isMapped(underworldObject, UNDERWORLD_SLOTS * 8) then
       error("幽冥冰窟怪物数组无效", 0)
     end
@@ -6363,6 +6642,11 @@ installModule("map", function(app)
   }
 end)
 
+ 
+ 
+ 
+ 
+
 installModule("inventory", function(app)
   local Memory = app.Memory
   local Codec = app.Codec
@@ -6383,6 +6667,7 @@ installModule("inventory", function(app)
   local U32_MASK = app.U32_MASK
   local POINTER_MASK = app.POINTER_MASK
 
+   
   local OFFSET = {
     treeLeft = 0x00,
     treeRight = 0x08,
@@ -6393,14 +6678,19 @@ installModule("inventory", function(app)
     catalogId = 0x08,
     catalogName = 0x30,
     catalogSecondName = 0x38,
-    searchName = 0xF8,
+    searchName = 0xF8,  
 
-    bagBoardVtable = 0x7ACB0,
-    itemInfoVtable = 0x538D0,
-    itemInfoItem = 0x2C0,
-    nodeChildren = 0x100,
-    arrayData = 0x18,
-    arrayItems = 0x10,
+     
+     
+     
+     
+     
+    bagBoardVtable = 0x7ACB0,    
+    itemInfoVtable = 0x538D0,    
+    itemInfoItem = 0x2C0,        
+    nodeChildren = 0x100,        
+    arrayData = 0x18,            
+    arrayItems = 0x10,           
   }
 
   local LIMIT = {
@@ -6481,6 +6771,8 @@ installModule("inventory", function(app)
     end
     if ownerName == nil then error("人物对象不属于有效内存映射", 0) end
 
+     
+     
     local rawA0High = Memory.read(
       runtime.gameBase + TAG["A0基址"] + 4, TYPE_DWORD
     )
@@ -6501,6 +6793,8 @@ installModule("inventory", function(app)
     end
     if #sameOwner == 0 then error("未找到人物对象对应的指针高位", 0) end
 
+     
+     
     if tagPrefix ~= 0 then
       for _, range in ipairs(ranges) do
         local rangeStart = tonumber(range.start)
@@ -6523,6 +6817,7 @@ installModule("inventory", function(app)
       sameOwnerHighCandidates=sameOwner,
       inventoryHighCandidates=expanded,
     }
+     
     runtime.pointerCodecTagPrefix = tagPrefix
     runtime.inventoryHighCandidates = copyArray(expanded)
     state.pointerContext = copyPointerContext(context)
@@ -6543,6 +6838,8 @@ installModule("inventory", function(app)
 
   local function readTreeSnapshot(root)
     root = requireRange(root, OFFSET.treeRight + 8, "背包树根")
+     
+     
     local links, frontier, discovered = {}, {root}, 0
     while #frontier > 0 do
       local batch, requests, queued = {}, {}, {}
@@ -6581,6 +6878,7 @@ installModule("inventory", function(app)
       frontier = nextFrontier
     end
 
+     
     local nodes, seen, stack = {}, {}, {root}
     while #stack > 0 do
       local node = stack[#stack]
@@ -6781,6 +7079,10 @@ installModule("inventory", function(app)
     return snapshot
   end
 
+   
+   
+   
+   
   local function readSelectedInventorySnapshot(selection)
     if type(selection) ~= "table" or #selection == 0 then
       error("定点背包快照缺少选择项", 0)
@@ -6869,6 +7171,10 @@ installModule("inventory", function(app)
     local entries = {}
     for index, item in ipairs(matched) do
       local encoded = encodedValues[index]
+       
+       
+       
+       
       local catalog = locateCatalog(
         encoded, highCandidates, "第 " .. index .. " 个已选物品"
       )
@@ -6889,6 +7195,8 @@ installModule("inventory", function(app)
       }
     end
 
+     
+     
     if pointerValue(Memory.read(rootSlot, TYPE_QWORD),
         "动态背包根", false) ~= root then
       error("读取期间动态背包根对象发生变化，请重试", 0)
@@ -6954,6 +7262,12 @@ installModule("inventory", function(app)
     return result
   end
 
+   
+   
+   
+   
+
+   
   local function selectItemsFromList()
     state.lastSelection = {}
     pcall(gg.clearResults)
@@ -6962,6 +7276,8 @@ installModule("inventory", function(app)
       gg.toast("背包为空")
       return {}, {reason="completed"}
     end
+     
+     
     local shown
     while true do
       local input = gg.prompt(
@@ -7020,6 +7336,7 @@ installModule("inventory", function(app)
     return selected, {reason=#selected > 0 and "completed" or "cancelled"}
   end
 
+   
   local function readNodeChildren(node)
     if node == 0 or not Memory.isMapped(node + OFFSET.nodeChildren, 8) then
       return {}
@@ -7052,6 +7369,7 @@ installModule("inventory", function(app)
     return children
   end
 
+   
   local function filterByVtable(nodes, vtable)
     if #nodes == 0 then return {} end
     local requests = {}
@@ -7065,6 +7383,7 @@ installModule("inventory", function(app)
     return matched
   end
 
+   
   local function readOpenedItems(current)
     local base = runtime.gameBase
     if not current.bagBoard or
@@ -7101,6 +7420,9 @@ installModule("inventory", function(app)
     return byTarget
   end
 
+   
+   
+   
   local function selectItemsByClick()
     local Listener = app.Listener
     if type(Listener) ~= "table" or type(Listener.run) ~= "function" then
@@ -7128,6 +7450,7 @@ installModule("inventory", function(app)
           if not current.seen[target] then
             local entry = current.byTarget[target]
             if not entry and not current.refreshed then
+               
               current.refreshed = true
               current.byTarget = indexInventoryTargets(readInventorySnapshot())
               entry = current.byTarget[target]
@@ -7177,6 +7500,8 @@ installModule("inventory", function(app)
     return selected, {reason=#selected > 0 and "completed" or "cancelled"}
   end
 
+   
+   
   local function selectItems()
     local selected, report = selectItemsByClick()
     if #selected > 0 then return selected, report end
@@ -7188,6 +7513,12 @@ installModule("inventory", function(app)
 
   local validateDropSnapshot
 
+   
+   
+   
+   
+   
+   
   local DROP = {
     entrySize = 0x18,
     itemPointer = 0x00,
@@ -7298,6 +7629,7 @@ installModule("inventory", function(app)
 
   validateDropSnapshot = function(snapshot) return checkDropIdentity(snapshot) end
 
+   
   local function readRawTriples(addresses)
     local requests = {}
     for _, address in ipairs(addresses) do
@@ -7489,6 +7821,8 @@ installModule("inventory", function(app)
   return api
 end)
 
+ 
+
 installModule("physics", function(app)
   local Memory, Codec = app.Memory, app.Codec
   local Transaction = app.Transaction
@@ -7506,18 +7840,37 @@ installModule("physics", function(app)
   local MIN_VALID_POINTER = app.MIN_VALID_POINTER
   local FAIRY_SLOT_SIZE = app.FAIRY_SLOT_SIZE
   local FAIRY_MAX_SLOTS = app.FAIRY_MAX_SLOTS
+   
   local COMBAT_PERSON_SIZE = FIELD["普攻基址"] + FAIRY_SLOT_SIZE
+   
+   
   local OFFSET = {
-    titleVtable = 0x1F4CC8,
-    titleAttrMap = 0xF0,
-    titleHideVector = 0x120,
-    hideAttrMap = 0x30,
+    titleVtable = 0x1F4CC8,    
+    titleAttrMap = 0xF0,       
+    titleHideVector = 0x120,   
+    hideAttrMap = 0x30,        
     mapLeft = 0x00,
     mapRight = 0x08,
-    mapNodeValue = 0x38,
+    mapNodeValue = 0x38,       
+     
+     
+     
+    suppressVtable = 0x1F4FC8,
+    suppressEffects = 0x40,
+     
+     
+    chaosVtable = 0x1F5E08,
+    chaosParams = 0x30,
+    chaosParamCount = 13,
   }
   local actions, api = {}, {}
 
+   
+   
+   
+   
+   
+   
   local COMBAT_TARGET_SPECS = {
     {id="person", label="人物", tagName="人物基址"},
   }
@@ -7580,6 +7933,9 @@ installModule("physics", function(app)
     return address
   end
 
+   
+   
+   
   local function fairyVector(person, label)
     local field = person + FIELD["普攻基址"]
     local values = Memory.readMany({
@@ -7663,6 +8019,11 @@ installModule("physics", function(app)
     end
     listenerState.recoveryFailures =
       (listenerState.recoveryFailures or 0) + 1
+     
+     
+     
+     
+     
     local targetMapped = false
     local okMapped, mapped = pcall(
       Memory.isMapped, gameBase(), 1, true
@@ -7681,7 +8042,14 @@ installModule("physics", function(app)
     return listenerState
   end
 
-  local function findTitleItems()
+   
+   
+   
+   
+   
+   
+   
+  local function findGroupItemsByVtable(vtableOffset, label)
     if type(Items.walkGlobalItems) ~= "function" or
        type(Items.readItemsFromKnownGroup) ~= "function" then
       error("全局物品查询接口缺失", 0)
@@ -7726,25 +8094,30 @@ installModule("physics", function(app)
       end
     end
     local vtables = Memory.readMany(vtableRequests)
-    local wanted = gameBase() + OFFSET.titleVtable
+    local wanted = gameBase() + vtableOffset
     local found
     for position, value in ipairs(vtables) do
       if untagPointer(value.value) == wanted then
-        if found then error("称号目录物品组不唯一", 0) end
+        if found then error(label .. "物品组不唯一", 0) end
         found = vtableOwners[position]
       end
     end
-    if not found then error("未找到称号目录（YJTitleData）", 0) end
+    if not found then error("未找到" .. label, 0) end
     local node = nodes[found]
     local items, itemReason = Items.readItemsFromKnownGroup({
       address=node.address, countAddress=node.address,
       count=tonumber(counts[found].value), nodeAddress=node.nodeAddress,
     })
     if not items then error(tostring(itemReason), 0) end
-    if #items == 0 or #items > 100000 then error("称号目录数量异常", 0) end
+    if #items == 0 or #items > 100000 then error(label .. "数量异常", 0) end
     return items
   end
 
+  local function findTitleItems()
+    return findGroupItemsByVtable(OFFSET.titleVtable, "称号目录（YJTitleData）")
+  end
+
+   
   local function collectMapNodes(roots, label)
     local result, frontier = {}, {}
     for index, root in ipairs(roots) do
@@ -7784,6 +8157,8 @@ installModule("physics", function(app)
     return result
   end
 
+   
+   
   local function titleSnapshot()
     local items = findTitleItems()
     local records, requests = {}, {}
@@ -7987,15 +8362,16 @@ installModule("physics", function(app)
   local function parsePhysicsOptions()
     local answer = gg.prompt({
       "监听倍率（自带护盾无敌）", "监听移速（留空则不监听）", "监听仙术（仅战斗对象）",
-      "修改面板",
-    }, {500, "", true, false}, {
-      "number", "number", "checkbox", "checkbox",
+      "修改面板", "破除灵咒+混沌压制（进关前开启，监听结束时恢复）",
+    }, {500, "", true, false, false}, {
+      "number", "number", "checkbox", "checkbox", "checkbox",
     })
     if not answer then return nil end
     local options = {
       multiplier=requireNumber(answer[1], 0.01, 100000, "监听倍率"),
       fairy=answer[3] == true,
       panel=answer[4] == true,
+      lingzhou=answer[5] == true,
     }
     if tostring(answer[2] or "") ~= "" then
       options.speed = requireNumber(answer[2], 0.01, 100, "监听移速")
@@ -8037,6 +8413,8 @@ installModule("physics", function(app)
     end
     return Transaction.write(specs, {
       label="一键物理", validateIdentity=validateIdentity,
+       
+       
       validateApplied=function()
         local decoded = Codec.decodeMany(codecWrites)
         for index, item in ipairs(codecWrites) do
@@ -8108,8 +8486,11 @@ installModule("physics", function(app)
 
   local function applyPanel(options)
     if not options.panel or not next(options.panelValues or {}) then return false end
+     
+     
     local person = resolveTag("人物基址", 1)
     capturePanelJournal(options, person)
+     
     local fields = {}
     for offset, value in pairs(options.panelValues) do
       fields[#fields + 1] = {address=person + offset, value=floatToDword(value)}
@@ -8151,6 +8532,8 @@ installModule("physics", function(app)
     local eligible = {}
     for _, target in ipairs(targets) do
       local multiplierAddress = target.address + FIELD["人物秒杀"]
+       
+       
       local fields = {
         {address=target.address + FIELD["人物等级"]},
         {address=target.address + FIELD["护盾基址"]},
@@ -8176,6 +8559,8 @@ installModule("physics", function(app)
       end)
       local currentBits = structureOk and target.currentBits or nil
       local ownedBits = runtime.physicsMultiplierOwnership[target.address]
+       
+       
       if structureOk and (currentBits == guardBits or currentBits == targetBits or
          currentBits == ownedBits) then
         target.multiplierAddress = multiplierAddress
@@ -8223,6 +8608,9 @@ installModule("physics", function(app)
     local fairyWriteSeen = {}
     for _, target in ipairs(eligible) do
       local person = target.address
+       
+       
+       
       if target.shield0 ~= 1 then
         codecWrites[#codecWrites + 1] = {
           address=person + FIELD["护盾基址"], value=1,
@@ -8325,6 +8713,8 @@ installModule("physics", function(app)
       return true
     end
 
+     
+     
     local targets = resolveCombatTargets(COMBAT_PERSON_SIZE, true)
     if options.fairy and next(journal.fairy or {}) then
       local seen = {}
@@ -8404,6 +8794,7 @@ installModule("physics", function(app)
         end
       end
     end
+     
     for owner, record in pairs(journal.fairy or {}) do
       if not fairyHandled[owner] then
         for _ in pairs(record.entries) do skipped = skipped + 1 end
@@ -8434,9 +8825,12 @@ installModule("physics", function(app)
     return true
   end
 
+   
+   
   local HUANGGU_PRESET = {
     multiplier=9999,
     fairy=false,
+    lingzhou=true,
     panel={["暴击"]=6, ["命中"]=6, ["破魔"]=6, ["破邪"]=6666, ["伤害率"]=9},
   }
 
@@ -8444,6 +8838,7 @@ installModule("physics", function(app)
     local options = {
       multiplier=HUANGGU_PRESET.multiplier,
       fairy=HUANGGU_PRESET.fairy,
+      lingzhou=HUANGGU_PRESET.lingzhou,
       panel=true,
       panelValues={},
     }
@@ -8452,6 +8847,318 @@ installModule("physics", function(app)
       if value ~= nil then options.panelValues[item.offset] = value end
     end
     return options
+  end
+
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
+  local CHAOS_NEUTRAL_LAST = 0xBF800000    
+  local lingzhouState = {entries=nil, chaos=nil}
+
+  local function readSuppressEffects(items)
+    local requests = {}
+    for index, item in ipairs(items) do
+      local field = item.address + OFFSET.suppressEffects
+      local base = (index - 1) * 4
+      requests[base + 1] = {address=item.address, flags=TYPE_QWORD}
+      requests[base + 2] = {address=field, flags=TYPE_QWORD}
+      requests[base + 3] = {address=field + 8, flags=TYPE_QWORD}
+      requests[base + 4] = {address=field + 16, flags=TYPE_QWORD}
+    end
+    local values = Memory.readMany(requests)
+    local wanted = gameBase() + OFFSET.suppressVtable
+    local records = {}
+    for index, item in ipairs(items) do
+      local base = (index - 1) * 4
+      local vtable = untagPointer(values[base + 1].value)
+      local beginRaw = values[base + 2].value
+      local finishRaw = values[base + 3].value
+      local first = untagPointer(beginRaw)
+      local finish = untagPointer(finishRaw)
+      local capacity = untagPointer(values[base + 4].value)
+      if vtable ~= wanted then error("灵咒配置对象虚表不符", 0) end
+      if first ~= 0 and (first < MIN_VALID_POINTER or finish < first or
+         capacity < finish or (finish - first) % 4 ~= 0 or
+         (capacity - first) % 4 ~= 0 or (finish - first) // 4 > 64) then
+        error(string.format("灵咒效果列表异常: 0x%X", item.address), 0)
+      end
+      records[index] = {
+        owner=item.address,
+        address=item.address + OFFSET.suppressEffects + 8,
+        beginRaw=beginRaw, finishRaw=finishRaw,
+        count=(finish - first) // 4,
+      }
+    end
+    return records
+  end
+
+  local function readLingzhouEntries(entries)
+    local items = {}
+    for index, entry in ipairs(entries) do items[index] = {address=entry.owner} end
+    return readSuppressEffects(items)
+  end
+
+  local function sameLingzhouOwners(entries)
+    return function()
+      local current = readLingzhouEntries(entries)
+      for index, entry in ipairs(entries) do
+        if current[index].beginRaw ~= entry.beginRaw then return false end
+      end
+      return true
+    end
+  end
+
+   
+  local function readChaosParams(items)
+    local requests = {}
+    for index, item in ipairs(items) do
+      local field = item.address + OFFSET.chaosParams
+      local base = (index - 1) * 3
+      requests[base + 1] = {address=item.address, flags=TYPE_QWORD}
+      requests[base + 2] = {address=field, flags=TYPE_QWORD}
+      requests[base + 3] = {address=field + 8, flags=TYPE_QWORD}
+    end
+    local values = Memory.readMany(requests)
+    local wanted = gameBase() + OFFSET.chaosVtable
+    local records = {}
+    for index, item in ipairs(items) do
+      local base = (index - 1) * 3
+      local first = untagPointer(values[base + 2].value)
+      local finish = untagPointer(values[base + 3].value)
+      if untagPointer(values[base + 1].value) ~= wanted then
+        error("混沌压制配置对象虚表不符", 0)
+      end
+      if first < MIN_VALID_POINTER or
+         finish - first ~= OFFSET.chaosParamCount * 12 then
+        error(string.format("混沌压制参数列表异常: 0x%X", item.address), 0)
+      end
+      records[index] = {owner=item.address, first=first}
+    end
+    return records
+  end
+
+  local function sameChaosOwners(fields)
+    return function()
+      local items = {}
+      for index, field in ipairs(fields) do items[index] = {address=field.owner} end
+      local current = readChaosParams(items)
+      for index, field in ipairs(fields) do
+        if current[index].first ~= field.first then return false end
+      end
+      return true
+    end
+  end
+
+   
+  local function clearChaos()
+    local items = findGroupItemsByVtable(
+      OFFSET.chaosVtable, "混沌压制配置（YJChaosLevelConfigData）"
+    )
+    local records = readChaosParams(items)
+    local fields = {}
+    for _, record in ipairs(records) do
+      for slot = 1, OFFSET.chaosParamCount do
+        fields[#fields + 1] = {
+          owner=record.owner, first=record.first,
+          address=record.first + (slot - 1) * 12,
+          value=slot == OFFSET.chaosParamCount and CHAOS_NEUTRAL_LAST or 0,
+        }
+      end
+    end
+    local current = Codec.decodeMany(fields)
+    local writes = {}
+    for index, field in ipairs(fields) do
+      local original = current[index] & 0xFFFFFFFF
+      if original ~= field.value then
+        field.original = original
+        writes[#writes + 1] = field
+      end
+    end
+    if #writes == 0 then return nil end
+    writeCodecTransaction(writes, "破除混沌压制", sameChaosOwners(writes))
+    return writes
+  end
+
+  local function countChaosLevels(fields)
+    local seen, count = {}, 0
+    for _, field in ipairs(fields or {}) do
+      if not seen[field.owner] then seen[field.owner], count = true, count + 1 end
+    end
+    return count
+  end
+
+   
+  local function lingzhouActive()
+    local entries = lingzhouState.entries
+    if entries then
+      local ok, current = pcall(readLingzhouEntries, entries)
+      local active = false
+      if ok then
+        for index, entry in ipairs(entries) do
+          if current[index].beginRaw == entry.beginRaw and
+             current[index].finishRaw == entry.beginRaw then
+            active = true
+            break
+          end
+        end
+      end
+      if not active then lingzhouState.entries = nil end
+    end
+    local chaos = lingzhouState.chaos
+    if chaos then
+      local ok, current = pcall(Codec.decodeMany, chaos)
+      local okOwners, sameOwners = pcall(sameChaosOwners(chaos))
+      local active = false
+      if ok and okOwners and sameOwners then
+        for index, field in ipairs(chaos) do
+          if (current[index] & 0xFFFFFFFF) == field.value then
+            active = true
+            break
+          end
+        end
+      end
+      if not active then lingzhouState.chaos = nil end
+    end
+    return lingzhouState.entries ~= nil or lingzhouState.chaos ~= nil
+  end
+
+   
+  local function clearLingzhou()
+    local items = findGroupItemsByVtable(
+      OFFSET.suppressVtable, "灵咒配置（YJSuppressesForLeveLData）"
+    )
+    local records = readSuppressEffects(items)
+    local specs, entries, effects = {}, {}, 0
+    for _, record in ipairs(records) do
+      if record.count > 0 then
+        specs[#specs + 1] = {
+          kind="raw", flags=TYPE_QWORD, address=record.address,
+          value=record.beginRaw, label="灵咒效果列表",
+        }
+        entries[#entries + 1] = record
+        effects = effects + record.count
+      end
+    end
+    if #specs > 0 then
+      Transaction.write(specs, {
+        label="破除灵咒", singleSnapshot=true,
+        validateIdentity=sameLingzhouOwners(entries),
+      })
+      lingzhouState.entries = entries
+    end
+    local chaos = clearChaos()
+    if chaos then lingzhouState.chaos = chaos end
+    local summary = {
+      records=#entries, effects=effects, chaos=countChaosLevels(chaos),
+    }
+    trace(string.format("lingzhou cleared records=%d effects=%d chaos=%d fields=%d",
+      summary.records, summary.effects, summary.chaos, chaos and #chaos or 0))
+    if #entries == 0 and not chaos then return nil end
+    return summary
+  end
+
+   
+  local function restoreLingzhou()
+    local result = {records=0, chaos=0, skipped=0}
+    local entries = lingzhouState.entries
+    lingzhouState.entries = nil
+    if entries then
+      local ok, records = pcall(readLingzhouEntries, entries)
+      if not ok then
+        trace("lingzhou restore skipped: " .. tostring(records))
+        result.skipped = result.skipped + #entries
+      else
+        local specs, owners = {}, {}
+        for index, entry in ipairs(entries) do
+          local record = records[index]
+           
+          if record.beginRaw == entry.beginRaw and
+             record.finishRaw == entry.beginRaw then
+            specs[#specs + 1] = {
+              kind="raw", flags=TYPE_QWORD, address=entry.address,
+              value=entry.finishRaw, label="灵咒效果列表恢复",
+            }
+            owners[#owners + 1] = entry
+          end
+        end
+        if #specs > 0 then
+          Transaction.write(specs, {
+            label="恢复灵咒", singleSnapshot=true,
+            validateIdentity=sameLingzhouOwners(owners),
+          })
+        end
+        result.records = #specs
+        result.skipped = result.skipped + #entries - #specs
+      end
+    end
+    local chaos = lingzhouState.chaos
+    lingzhouState.chaos = nil
+    if chaos then
+      local ok, current = pcall(Codec.decodeMany, chaos)
+      local okOwners, sameOwners = pcall(sameChaosOwners(chaos))
+      if not ok or not okOwners or not sameOwners then
+        trace("chaos restore skipped: " .. tostring(current))
+        result.skipped = result.skipped + countChaosLevels(chaos)
+      else
+        local writes = {}
+        for index, field in ipairs(chaos) do
+          if (current[index] & 0xFFFFFFFF) == field.value then
+            writes[#writes + 1] = {
+              owner=field.owner, first=field.first,
+              address=field.address, value=field.original,
+            }
+          end
+        end
+        if #writes > 0 then
+          writeCodecTransaction(writes, "恢复混沌压制", sameChaosOwners(writes))
+        end
+        result.chaos = countChaosLevels(writes)
+        result.skipped = result.skipped + countChaosLevels(chaos) - result.chaos
+      end
+    end
+    trace(string.format("lingzhou restored records=%d chaos=%d skipped=%d",
+      result.records, result.chaos, result.skipped))
+    return result
+  end
+
+  function actions.pclz()
+    if lingzhouActive() then
+      local choice = gg.alert(
+        "灵咒与混沌压制已破除。要恢复吗？", "恢复", "取消"
+      )
+      if choice ~= 1 then return false end
+      local result = restoreLingzhou()
+      local message = string.format(
+        "已恢复 %d 条灵咒、%d 档混沌压制", result.records, result.chaos
+      )
+      if result.skipped > 0 then
+        message = message .. string.format(
+          "，跳过 %d 项（配置已被游戏重建）", result.skipped
+        )
+      end
+      gg.alert(message .. "\n重新进关后生效。")
+      return true
+    end
+    local summary = clearLingzhou()
+    if not summary then
+      gg.alert("灵咒与混沌压制已经全部为空，无需破除")
+      return false
+    end
+    gg.alert(string.format(
+      "破除完成：%d 条灵咒共 %d 个效果已清空，%d 档混沌压制已归零。\n" ..
+      "请在进关前开启（已在关内的需退出重进）；再点一次可恢复。",
+      summary.records, summary.effects, summary.chaos
+    ))
+    return true
   end
 
   local runPhysicsListener
@@ -8471,11 +9178,27 @@ installModule("physics", function(app)
     for _ in pairs(options.panelValues or {}) do panelCount = panelCount + 1 end
     trace(string.format(
       "physics listener options multiplier=%s speed=%s fairy=%s " ..
-      "panel=%s panel_fields=%d shield=auto",
+      "panel=%s panel_fields=%d lingzhou=%s shield=auto",
       tostring(options.multiplier), tostring(options.speed),
-      tostring(options.fairy), tostring(options.panel), panelCount
+      tostring(options.fairy), tostring(options.panel), panelCount,
+      tostring(options.lingzhou)
     ))
-    gg.toast("开启成功")
+    local startMessage = "开启成功"
+    if options.lingzhou then
+      if lingzhouActive() then
+        startMessage = "开启成功（灵咒与混沌压制此前已破除）"
+      else
+        local summary = clearLingzhou()
+        options.lingzhouOwned = summary ~= nil
+        if summary then
+          startMessage = string.format(
+            "开启成功，已破除 %d 条灵咒、%d 档混沌压制",
+            summary.records, summary.chaos
+          )
+        end
+      end
+    end
+    gg.toast(startMessage)
     local result = Listener.run({
       name="one_key_physics",
       intervalMs=50,
@@ -8487,11 +9210,24 @@ installModule("physics", function(app)
       end,
       recover=recoverListener,
       cleanup=function(listenerOptions, outcome)
-        return cleanupPhysics(listenerOptions, outcome)
+        local ok, problem = pcall(cleanupPhysics, listenerOptions, outcome)
+        if listenerOptions.lingzhouOwned then
+          listenerOptions.lingzhouOwned = false
+          if type(outcome) == "table" and outcome.reason == "target_unavailable" then
+            lingzhouState.entries, lingzhouState.chaos = nil, nil
+          else
+            local restoredOk, restoreProblem = pcall(restoreLingzhou)
+            if not restoredOk and ok then
+              ok, problem = false, "灵咒恢复失败：" .. tostring(restoreProblem)
+            end
+          end
+        end
+        if not ok then error(problem, 0) end
+        return true
       end,
     })
     if result.cleanupError then
-      error("一键物理监听结束，但面板/仙术自动恢复失败：" ..
+      error("一键物理监听结束，但面板/仙术/灵咒自动恢复失败：" ..
         tostring(result.cleanupError), 0)
     end
     if result.reason == "cancelled" then
@@ -8514,10 +9250,17 @@ installModule("physics", function(app)
     return true
   end
 
+   
   api.applyPhysics = applyPhysics
   api.cleanupPhysics = cleanupPhysics
   return {actions=actions, api=api}
 end)
+
+ 
+ 
+ 
+ 
+ 
 
 installModule("equipment", function(app)
   local Memory = app.Memory
@@ -8551,10 +9294,14 @@ installModule("equipment", function(app)
     pearlLevel = 0x14,
     pearlBreakthrough = 0x20,
     pearlStride = 0x38,
-    attributeKey = 0x10,
-    attributeValue = 0x28,
+    attributeKey = 0x10,       
+    attributeValue = 0x28,     
   }
+   
+   
+   
 
+   
   local ATTRIBUTE_TOKENS = {
     {"A7", "生命"}, {"A8", "魔法"}, {"A9", "攻击"},
     {"AA", "防御"}, {"CY", "破魔"}, {"AC", "魔抗"},
@@ -8570,6 +9317,16 @@ installModule("equipment", function(app)
     {"EK", "灵力"}, {"EI", "根骨"},
   }
 
+   
+   
+   
+   
+   
+   
+   
+   
+   
+   
   local PERFECT_LEGEND = {
     {prefixes={"武器-"}, label="武器", attrs={{"A9", 3500}, {"AF", 0.4}}},
     {prefixes={"衣服-", "防具-"}, label="衣服", attrs={
@@ -8581,12 +9338,15 @@ installModule("equipment", function(app)
   }
   local PERFECT_LEGEND_EXCLUDE = {"化身"}
 
+   
   local PEARL_PRESETS = {
     {"精攻", 502152}, {"精血", 502150}, {"精爆", 502154},
     {"精抗", 502167}, {"精伤", 502191},
     {"史攻", 502162}, {"史血", 502160}, {"史爆", 502164},
     {"史抗", 502168}, {"史伤", 502192},
   }
+   
+   
   local PERFECT_KARMA_QUALITY = 5
   local PERFECT_KARMA = {
     {branch="子", label="子业力", attrs={{"A9", 155}, {"BR", 236}}},
@@ -8697,6 +9457,9 @@ installModule("equipment", function(app)
       snapshot = inventory.readInventorySnapshot()
     end
     local entries = mapSelection(snapshot, selected)
+     
+     
+     
     local identities = {}
     for index, entry in ipairs(entries) do
       identities[index] = copyIdentity(entry)
@@ -8927,6 +9690,8 @@ installModule("equipment", function(app)
       transactionOptions.validateOriginal = options.validateOriginal
     end
     if options.verifyDecoded == true then
+       
+       
       transactionOptions.validateApplied = function()
         local verified, problem = verifySpecs(specs)
         if not verified then error(problem, 0) end
@@ -8950,6 +9715,8 @@ installModule("equipment", function(app)
         label="第 " .. index .. " 件物品数量",
       }
       metadata[#metadata + 1] = {
+         
+         
         kind="key64",
         address=entry.metadataAddress,
         value=target,
@@ -8967,6 +9734,7 @@ installModule("equipment", function(app)
       local countRaw = original[index]
       local metadataRaw = original[#entries + index]
       local count = rotateLeft32(countRaw[4] ~ TAG["自拟值"], countRaw[8])
+       
       local metadata = Codec.decode64(entry.metadataAddress)
       local primary = metadataRaw[0]
       if metadata ~= count or
@@ -9042,6 +9810,8 @@ installModule("equipment", function(app)
     local itemCount = #entries
     local function validateOriginal(original)
       validateStackOriginal(entries, original)
+       
+       
       for index = 1, itemCount do
         local raw = original[index]
         local decoded = rotateLeft32(raw[4] ~ TAG["自拟值"], raw[8])
@@ -9133,6 +9903,9 @@ installModule("equipment", function(app)
     return specs
   end
 
+   
+   
+   
   local function readAttributeChain(rootField)
     local nodes, seen = {}, {}
     local current = rootField
@@ -9166,6 +9939,7 @@ installModule("equipment", function(app)
     return nodes
   end
 
+   
   local function attributeRoot(targetBase)
     local ok, rootField = pcall(Memory.resolve, targetBase, TAG["属性地址"],
       OFFSET.attributeValue + 12)
@@ -9196,6 +9970,7 @@ installModule("equipment", function(app)
       end
     end
     if #attributes == 0 then error("没有识别到可修改的装备属性", 0) end
+     
     table.sort(attributes, function(left, right) return left.order < right.order end)
     return {
       inventory=selection.inventory,
@@ -9210,6 +9985,9 @@ installModule("equipment", function(app)
   end
 
   local function validateAttributeSnapshot(snapshot)
+     
+     
+     
     validateFastInventoryIdentities(
       snapshot.inventorySnapshot, {snapshot.identity}
     )
@@ -9239,6 +10017,8 @@ installModule("equipment", function(app)
     return requireInteger(text, minimum, maximum, label)
   end
 
+   
+   
   local function runAction(label, body, unchangedIsFalse)
     local ok, result = pcall(body)
     if not ok then
@@ -9279,6 +10059,7 @@ installModule("equipment", function(app)
       local selection = selectInventoryEntries("辅助物", true)
       if not selection then return {cancelled=true} end
       local auxiliary = {identity=copyIdentity(selection.entries[1])}
+       
       validateFastInventoryIdentities(
         selection.snapshot, selection.identities
       )
@@ -9303,6 +10084,8 @@ installModule("equipment", function(app)
         local identity = copyIdentity(entry)
         identities[index] = identity
       end
+       
+       
       requireSeparateStackTargets(state.auxiliary.identity, identities)
 
       local auxiliaryEntry = copyIdentity(state.auxiliary.identity)
@@ -9323,6 +10106,9 @@ installModule("equipment", function(app)
           error(problem, 0)
         end
 
+         
+         
+         
         auxiliarySnapshot, auxiliaryEntry = refreshInventoryIdentity(
           selection.inventory,
           selection.snapshot,
@@ -9352,6 +10138,8 @@ installModule("equipment", function(app)
         #selection.entries, increment))
       local function waitForStack(milliseconds)
         local slept, problem = pcall(gg.sleep, milliseconds)
+         
+         
         if gg.isVisible() then return false end
         if not slept then error(problem, 0) end
         return true
@@ -9366,9 +10154,12 @@ installModule("equipment", function(app)
           local raw = Memory.read(auxiliaryAddress, TYPE_DWORD)
           if u32(raw) == u32(current.baseline) then return nil end
 
+           
+           
           current.baseline = raw
           current.observed = current.observed + 1
 
+           
           if not waitForStack(500) then return Listener.stop("cancelled") end
           validateLoopIdentity()
           local writeOk, writeProblem
@@ -9379,6 +10170,8 @@ installModule("equipment", function(app)
               selection.snapshot,
               selection.entries,
               increment,
+               
+               
               validateTargetIdentity
             )
             if writeOk then break end
@@ -9433,6 +10226,9 @@ installModule("equipment", function(app)
     end)
   end
 
+   
+   
+   
   local function choosePearlIds()
     local MANUAL = #PEARL_PRESETS + 2
     local items = {"保持不变"}
@@ -9636,6 +10432,8 @@ installModule("equipment", function(app)
     return nil
   end
 
+   
+   
   local function applyPerfectPreset(label, findPreset, quality)
     local selection = selectInventoryEntries(label, false)
     if not selection then return {cancelled=true} end
@@ -9732,6 +10530,12 @@ installModule("equipment", function(app)
   return api
 end)
 
+ 
+ 
+ 
+ 
+ 
+
 installModule("creationPet", function(app)
   local Memory = app.Memory
   local Codec = app.Codec
@@ -9760,9 +10564,20 @@ installModule("creationPet", function(app)
     bookOwner = FIELD["宠物指针"],
     bookName = FIELD["宠物名称"],
     referenceWord = 0x10,
-    followTarget = 0x1120,
+     
+     
+     
+    followTarget = 0x1120,     
   }
 
+   
+   
+   
+   
+   
+   
+   
+   
   local state = {
     recordedBookPets={},
   }
@@ -9858,6 +10673,10 @@ installModule("creationPet", function(app)
       local decoded = app.rotateLeft32(raw4 ~ TAG["自拟值"], raw8)
       rollback[index] = {address=item.address, value=decoded}
       local originals = {raw0, raw4, raw8}
+       
+       
+       
+       
       local targets = {Codec.encodeKey(
         raw0, raw4, raw8, item.value & U32_MASK, true
       )}
@@ -9922,6 +10741,8 @@ installModule("creationPet", function(app)
     local rollback = captureCodecTransaction(writes)
     rollbackIdentityValidator = rollbackIdentityValidator or precommitValidator
 
+     
+     
     runWithTargetPaused(label or "加密字段写入", function()
       local precommitOk, precommitProblem = xpcall(function()
         if type(precommitValidator) == "function" then precommitValidator() end
@@ -9933,6 +10754,8 @@ installModule("creationPet", function(app)
         error((label or "加密字段写入") .. "提交前验证失败：" ..
               tostring(precommitProblem), 0)
       end
+       
+       
       if type(onCaptured) == "function" then onCaptured(rollback) end
 
       local ok, problem = xpcall(function()
@@ -9982,6 +10805,9 @@ installModule("creationPet", function(app)
     end
     local values = Memory.readMany(requests)
     local snapshot = {base=base, slots={}, entries={}}
+     
+     
+     
     local ownerRequests, occupied = {}, {}
     for index, value in ipairs(values) do
       local raw = tonumber(value.value)
@@ -10013,6 +10839,9 @@ installModule("creationPet", function(app)
         local entry = {
           slotIndex=slot.index,
           slotAddress=requests[slot.index].address,
+           
+           
+           
           petRaw=slot.raw,
           petAddress=slot.address,
           ownerAddress=slot.owner,
@@ -10034,6 +10863,7 @@ installModule("creationPet", function(app)
       a.ownerAddress == b.ownerAddress and a.name == b.name
   end
 
+   
   local function sameRecordedEntries(current, recorded)
     for _, old in ipairs(recorded) do
       if not sameBookEntry(current[old.slotIndex], old) then return false end
@@ -10068,10 +10898,16 @@ installModule("creationPet", function(app)
     return current
   end
 
+   
+   
+   
+   
   local function requireCapturedBookPets(entries, label)
     if type(entries) ~= "table" or #entries == 0 then
       error((label or "奇闻录宠物") .. "记录为空", 0)
     end
+     
+     
     local prefixes, ownerRequests = {}, {}
     for index, entry in ipairs(entries) do
       if type(entry) ~= "table" then
@@ -10108,6 +10944,9 @@ installModule("creationPet", function(app)
     if type(recorded) ~= "table" or #recorded == 0 then
       return nil, "尚未记录奇闻录宠物"
     end
+     
+     
+     
     local chainOk, current = pcall(readPetBookSnapshot)
     if not chainOk then
       local capturedOk, capturedProblem = pcall(
@@ -10193,6 +11032,7 @@ installModule("creationPet", function(app)
     if Memory.pointer(upperAddress) ~= countAddress then
       error("宠物数量结构在读取期间发生变化", 0)
     end
+     
     local header = Memory.readMany({
       {address=countAddress, flags=TYPE_DWORD},
       {address=countAddress + 4, flags=TYPE_DWORD},
@@ -10273,6 +11113,8 @@ installModule("creationPet", function(app)
   end
 
   local function rollbackExternalAppend(snapshot, originals, expected)
+     
+     
     requirePetListIdentity(snapshot, originals.count, expected.count)
     requireOwnedRawWrites(
       originals.metadata, expected.metadata, "宠物追加元数据"
@@ -10295,6 +11137,8 @@ installModule("creationPet", function(app)
       "宠物追加跟随目标"
     )
     requirePetListIdentity(snapshot, originals.count, expected.count)
+     
+     
     Memory.write(snapshot.countAddress, originals.count, TYPE_DWORD)
     Memory.writeMany(originals.metadata)
     if #originals.slots > 0 then Memory.writeMany(originals.slots) end
@@ -10391,11 +11235,15 @@ installModule("creationPet", function(app)
       }
     end
 
+     
+     
     local metadataRequests = {
       {address=snapshot.upperAddress + 8, flags=TYPE_DWORD},
       {address=snapshot.upperAddress + 12, flags=TYPE_DWORD},
       {address=snapshot.upperAddress + 16, flags=TYPE_QWORD},
     }
+     
+     
     for offset = 8, 12, 4 do
       metadataRequests[#metadataRequests + 1] = {
         address=snapshot.countAddress + offset,
@@ -10429,8 +11277,11 @@ installModule("creationPet", function(app)
     local referenceWrites = {}
     for index, value in ipairs(referenceValues) do
       local request = referenceRequests[index]
+       
       local original = tonumber(value.value) & U32_MASK
       local increase = referenceOccurrences[request.petAddress]
+       
+       
       if original + increase > U32_MASK then
         return nil, string.format(
           "第 0x%X 个外部宠物引用原始字即将溢出：0x%X + %d",
@@ -10449,6 +11300,10 @@ installModule("creationPet", function(app)
       }
     end
 
+     
+     
+     
+     
     local playerTarget = readPlayerFollowTarget()
     local followTargetRequests, followTargetWrites = {}, {}
     for index, request in ipairs(referenceRequests) do
@@ -10480,6 +11335,10 @@ installModule("creationPet", function(app)
         value=petRaw,
       }
     end
+     
+     
+     
+     
     local metadataWrites = {
       {address=snapshot.upperAddress + 8, flags=TYPE_DWORD, value=0},
       {address=snapshot.upperAddress + 12, flags=TYPE_DWORD, value=0},
@@ -10510,6 +11369,8 @@ installModule("creationPet", function(app)
       if type(precommitValidator) == "function" then
         precommitValidator()
       end
+       
+       
       requirePetListIdentity(snapshot, originals.count, originals.count)
       requireRawWritesOriginal(originals.slots, "宠物追加目标槽位")
       requireRawWritesOriginal(originals.metadata, "宠物追加元数据")
@@ -10518,6 +11379,8 @@ installModule("creationPet", function(app)
         originals.followTargets, "宠物追加跟随目标"
       )
       requirePlayerFollowTarget(playerTarget)
+       
+       
       writeStarted = true
       Memory.writeMany(followTargetWrites)
       verifyExactQwordWrites(followTargetWrites, "外部宠物跟随目标")
@@ -10527,6 +11390,8 @@ installModule("creationPet", function(app)
       Memory.writeMany(metadataWrites)
       Memory.write(snapshot.countAddress, newCount, TYPE_DWORD)
 
+       
+       
       verifyExactQwordWrites(slotWrites, "外部宠物槽位")
       verifyRawWrites(slotWrites, "外部宠物槽位")
       verifyRawWrites(metadataWrites, "外部宠物元数据")
@@ -10670,6 +11535,7 @@ installModule("creationPet", function(app)
     end
     requireBookEntries(snapshot, selected)
 
+     
     for _, entry in ipairs(selected) do
       state.recordedBookPets[#state.recordedBookPets + 1] = {
         slotIndex=entry.slotIndex,
@@ -10713,7 +11579,13 @@ installModule("creationPet", function(app)
     return true
   end
 
-  local CLONE_VECTOR = {skills=656, nirvana=680}
+
+   
+   
+   
+   
+   
+  local CLONE_VECTOR = {skills=656, nirvana=680}   
 
   local function readCodecVector(owner, label)
     local values = Memory.readMany({
@@ -11016,6 +11888,7 @@ installModule("creationPet", function(app)
     if not operationOk or not appendOk then
       local rollbackProblems = {}
       if fieldRollback then
+         
         local fieldOk, fieldProblem = pcall(
           runWithTargetPaused, "全融灵字段回滚", function()
             validateSelectedAndNirvana()
@@ -11054,6 +11927,7 @@ installModule("creationPet", function(app)
   end
   return {
     actions=actions,
+     
     requireCapturedBookPets=requireCapturedBookPets,
     validateRecordedBookPets=validateRecordedBookPets,
     appendExternalPets=appendExternalPets,
@@ -11125,6 +11999,8 @@ local function mainLoop()
   if not app.Listener or type(app.Listener.pollMenuVisibility) ~= "function" then
     error("统一监听模块尚未安装", 0)
   end
+   
+   
   local report = app.Listener.pollMenuVisibility({
     name="main_menu_visibility",
     intervalMs=100,
